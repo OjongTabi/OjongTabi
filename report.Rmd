@@ -77,10 +77,10 @@ cases where one document running both R and Python code can prove extremely
 useful and concise. There is also a button in RStudio to insert a snippet, it
 is a small green `+C` in the top right of the editor.
 
-```{python}
-import datetime
-print(f'Wishing you a wonderful hello from Python at {datetime.datetime.now()}')
-```
+#```{python}
+#import datetime
+#print(f'Wishing you a wonderful hello from Python at #{datetime.datetime.now()}')
+#```
 
 I can also test my code in RStudio without having to knit the entire document
 by pressing the green "Play" arrow on the snippet I am interested in.
@@ -115,6 +115,19 @@ script with high quality visual aesthetics. Do not use default ggplot colors.
 ```{r}
 # use source to load your functions from main.R into this document.
 source("main.R")
+# use source to load your functions from main.R into this document.
+source("main.R")
+expr <- load_expression("example_intensity_data.csv")
+samples <- filter_15(expr)
+sample_names <- affy_to_hgnc(samples)
+all_names <- sample_names$hgnc_symbol[-which(sample_names$hgnc_symbol == "")]
+goodGenes <- sample(all_names, 10)
+badGenes <- sample(all_names, 10)
+plot_tibble <- reduce_data(expr_tibble = expr, names_ids = sample_names,
+                              goodGenes, badGenes)
+p <- plot_ggplot(plot_tibble)
+p
+
 ```
 
 

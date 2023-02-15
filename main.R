@@ -35,7 +35,9 @@ library(tidyverse)
 #' @examples 
 #' `data <- load_expression('/project/bf528/project_1/data/example_intensity_data.csv')`
 load_expression <- function(filepath) {
-  return(NULL)
+  expr_df <- read.csv(filepath, header = T, sep = " ")
+  expr_df <- cbind(probeids = row.names(expr_df), expr_df)
+  return(tibble(expr_df))
 }
 
 #' Filter 15% of the gene expression values.
@@ -54,7 +56,18 @@ load_expression <- function(filepath) {
 #' `tibble [40,158 × 1] (S3: tbl_df/tbl/data.frame)`
 #' `$ probeids: chr [1:40158] "1007_s_at" "1053_at" "117_at" "121_at" ...`
 filter_15 <- function(tibble){
-  return(NULL)
+  # for each gene, at least 15% of the gene-expression values must be > log2(15)
+  percent_gt <- function(row) {
+    
+    boolean_row <- row > log2(15)
+    percent_row <- sum(boolean_row)/length(row)
+    return(percent_row)
+  }
+  
+  
+  row_pct <- apply(tibble[2:ncol(tibble)], percent_gt, MARGIN = 1) # don't capture first row
+  boolean_rows <- which(row_pct > 0.15)
+  return(tibble[boolean_rows, 1])
 }
 
 #### Gene name conversion ####
@@ -82,7 +95,15 @@ filter_15 <- function(tibble){
 #' `4        1553551_s_at      MT-ND2`
 #' `5           202860_at     DENND4B`
 affy_to_hgnc <- function(affy_vector) {
-  return(NULL)
+  affy_vector <- pull(affy_vector)
+  usemart <- useMart(host = 'https://www.ensembl.org',
+                     biomart = 'ENSEMBL_MART_ENSEMBL')
+  ensembl <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
+  newNames <- getBM(attributes = c('affy_hg_u133_plus_2', 'hgnc_symbol'), 
+                    filters = c('affy_hg_u133_plus_2'),
+                    values = affy_vector, 
+                    mart = ensembl)
+  return(as_tibble(newNames))
 }
 
 #### ggplot ####
@@ -117,7 +138,15 @@ affy_to_hgnc <- function(affy_vector) {
 #' `1 202860_at   DENND4B good        7.16      ...`
 #' `2 204340_at   TMEM187 good        6.40      ...`
 reduce_data <- function(expr_tibble, names_ids, good_genes, bad_genes){
-  return(NULL)
+  expr_tibble <- add_column(expr_tibble, 
+                            .after = "probeids",
+                            names_ids[match(expr_tibble$probeids,
+                                            names_ids$affy_hg_u133_plus_2), 2])
+  good_tib <- expr_tibble[which(expr_tibble$hgnc_symbol %in% good_genes),]
+  good_tib <- add_column(good_tib, .after = "hgnc_symbol", gene_set = "good")
+  bad_tib <- expr_tibble[which(expr_tibble$hgnc_symbol %in% bad_genes),]
+  bad_tib <- add_column(bad_tib, .after = "hgnc_symbol", gene_set = "bad")
+  return(rbind(good_tib, bad_tib))
 }
 
 #' Plot a boxplot of good and bad genes.
@@ -133,5 +162,9 @@ reduce_data <- function(expr_tibble, names_ids, good_genes, bad_genes){
 #'
 #' @examples `p <- plot_ggplot(plot_tibble)`
 plot_ggplot <- function(tibble) {
-  return(NULL)
+  tibble %>% 
+    pivot_longer(starts_with('GSM'), names_to = 'sample', values_to = 'value') %>%
+    ggplot(aes(x=hgnc_symbol, y=value)) +
+    geom_boxplot() +
+    facet_wrap(~ sample, scales = "free_y")
 }

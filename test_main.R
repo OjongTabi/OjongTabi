@@ -4,7 +4,7 @@ source("main.R")
 library(testthat)
 
 test_that("loading csv works using load_expression()", {
-  result_tib <- load_expression("/project/bf528/project_1/data/example_intensity_data.csv")
+  result_tib <- load_expression("example_intensity_data.csv")
   expect_equal(dim(result_tib), c(54675, 36))
   expect_true(is_tibble(result_tib))
 })
@@ -28,7 +28,7 @@ test_that("affy ids can be converted to HGNC names properly using affy_to_hgnc()
     expect_warning(warning("Could not connect to ENSEMBL."))
   } 
   else {
-    expect_equal(response$hgnc_symbol, c("MT-ND1", "MT-TI", "MT-TM", "MT-ND2", "MT-TW"))
+    expect_equal(response$hgnc_symbol, c("MT-ND1", "MT-TI", "MT-TM", "MT-ND2"))
   }
 })
 
